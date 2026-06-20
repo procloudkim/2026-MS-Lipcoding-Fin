@@ -90,24 +90,40 @@
 
 ```bash
 npm install
-npm run smoke      # 네트워크 비의존 단위 smoke (21 checks)
+npm run smoke      # 네트워크 비의존 단위 smoke (28 checks)
 npm start          # http://localhost:3000
 ```
 
-로컬에서 실제 SDK 응답까지 재현(선택):
+### 로컬에서 실제 SDK 응답(source=copilot-sdk) 재현
+
+기본 `npm start`는 인증/런타임이 없으면 결정적 fallback으로 동작한다(데모 가용성 유지).
+**로컬에서 실제 모델 응답까지 재현**하려면 (1) 비대화식 토큰 + (2) Copilot CLI 런타임을 지정한다:
 
 ```powershell
-$env:COPILOT_GH_TOKEN = (gh auth token)        # 토큰 인증
-$env:COPILOT_CLI_PATH = "C:\...\GitHub.Copilot_*\copilot.exe"  # 설치된 CLI 런타임
+# 1) GitHub 토큰으로 비대화식 인증 (gh CLI 로그인 상태 필요)
+$env:COPILOT_GH_TOKEN = (gh auth token)
+# 2) 설치된 Copilot CLI 런타임 경로 (미설정 시 resolveCliPath()가 node_modules에서 자동 탐색)
+$env:COPILOT_CLI_PATH = "C:\Users\<you>\AppData\Local\Microsoft\WinGet\Packages\GitHub.Copilot_*\copilot.exe"
 $env:COPILOT_MODEL = "auto"
 npm start
 ```
+
+확인:
+
+```powershell
+# source=copilot-sdk, authMode=token 이면 실제 SDK 경로로 동작 중
+curl.exe -s -X POST http://localhost:3000/api/plan -H "Content-Type: application/json" `
+  --data '{"context":"분기 보고서 마감\n고객 회신\n언젠가 정리"}'
+```
+
+> macOS/Linux는 `export COPILOT_GH_TOKEN=$(gh auth token)` 형식으로 동일하게 설정한다.
+> 런타임이 없거나 토큰이 만료되면 자동으로 fallback(HTTP 200, `source: fallback`)으로 전환된다.
 
 ## 스모크 요약
 
 | 종류 | 명령/행위 | 결과 |
 | --- | --- | --- |
-| 단위 | `npm run smoke` | PASS (21) |
+| 단위 | `npm run smoke` | PASS (28) |
 | 헬스 | `GET /api/health` | `{ ok:true, authMode:"token" }` |
 | 계획 | `POST /api/plan` | 프로덕션 `source: copilot-sdk` |
 | 작업물 | `POST /api/assist` | `source: copilot-sdk` |
@@ -116,15 +132,28 @@ npm start
 ## 프로젝트 구조
 
 ```
-server.js                Express: 정적 + /api/plan + /api/assist + /api/health (+ resolveCliPath)
+server.js                Express+helmet: 정적 + /api/plan + /api/assist + /api/health (+ resolveCliPath, scopedPermission)
 lib.js                   프롬프트/파서/normalize/결정적 fallback (재사용 코어)
 public/                  index.html · styles.css · app.js (Warm Editorial UI)
-scripts/smoke.js         단위 smoke (21 checks)
+scripts/smoke.js         단위 smoke (28 checks)
 .env.example             PORT / COPILOT_MODEL / SDK_TIMEOUT_MS / COPILOT_GH_TOKEN / COPILOT_CLI_PATH
-docs/adr/                ADR 0001(브랜치/배포) · 0002(SDK) · 0003(피벗)
+docs/adr/                ADR 0001(브랜치/배포) · 0002(SDK) · 0003(피벗) · 0004(UX) · 0005(보안)
 docs/evaluation/         심사 브리프 + 스크린샷
 prep/llm-wiki/           기획/근거 트레이스 (LLM-Wiki)
 ```
+
+## 보안 하드닝
+
+- **보안 헤더**: `helmet` 적용 — CSP(스크립트 `'self'`, Pretendard CDN만 style/font 예외), HSTS,
+  X-Frame-Options, X-Content-Type-Options. `X-Powered-By` 제거.
+- **에러 마스킹**: `/api/plan`·`/api/assist`의 실패는 사용자에게 일반 안내만 반환하고
+  상세(스택/내부 경로)는 서버 로그(`console.error`)로만 남긴다. 응답에 `detail`/`err.message` 미포함.
+- **권한 범위 축소**: SDK 세션 `onPermissionRequest`를 전면 승인(`approveAll`)에서
+  `scopedPermission`으로 교체 — 셸 실행/파일 쓰기/URL 접근/MCP/확장 권한 요청은 거부하고
+  무해한 요청만 1회 승인(프롬프트 주입 대비).
+- **진단 라우트 제거**: 런타임 경로 파악용 임시 `/api/_diag`는 목적 달성(resolveCliPath 자동화) 후 삭제.
+- **본문 크기 제한**: `express.json({ limit: "256kb" })`.
+- 시크릿(토큰)은 코드/문서에 하드코딩하지 않으며 `.env`/Azure App Setting으로만 주입.
 
 ## 브랜치 정책
 
@@ -136,4 +165,4 @@ prep/llm-wiki/           기획/근거 트레이스 (LLM-Wiki)
 
 - `COPILOT_GH_TOKEN`은 Azure App Setting으로만 주입(레포 커밋 없음). 데모용 사용자 토큰.
 - Azure는 **B1**(Always On)로 런타임을 상주시켜 콜드스타트를 줄였다.
-- `GET /api/_diag?key=...`는 런타임 경로 진단용(비밀 미노출). 운영 보조 용도.
+- 보안 하드닝(helmet/에러 마스킹/권한 축소/진단 라우트 제거)은 위 "보안 하드닝" 절 참조(ADR 0005).

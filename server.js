@@ -1,9 +1,10 @@
 import express from "express";
+import helmet from "helmet";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
-import { CopilotClient, approveAll } from "@github/copilot-sdk";
+import { CopilotClient } from "@github/copilot-sdk";
 import {
   buildPlanPrompt,
   buildAssistPrompt,
@@ -87,11 +88,32 @@ function nowKST() {
 }
 
 const app = express();
+app.disable("x-powered-by");
+// 보안 헤더: CSP/HSTS/X-Frame-Options 등. Pretendard CDN(스타일/폰트)만 예외 허용.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "default-src": ["'self'"],
+        "base-uri": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'", "https://cdn.jsdelivr.net"],
+        "font-src": ["'self'", "https://cdn.jsdelivr.net", "data:"],
+        "img-src": ["'self'", "data:"],
+        "connect-src": ["'self'"],
+        "object-src": ["'none'"],
+        "frame-ancestors": ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 app.use(express.json({ limit: "256kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 const MODEL = process.env.COPILOT_MODEL || "auto";
-const SDK_TIMEOUT_MS = Number(process.env.SDK_TIMEOUT_MS || 60000);
+const SDK_TIMEOUT_MS = Number(process.env.SDK_TIMEOUT_MS || 20000);
 const MAX_INPUT = 6000;
 // 비대화식 서버 인증용 GitHub 토큰 (있으면 token 모드, 없으면 로그인 사용자 모드)
 const GH_TOKEN =
@@ -126,9 +148,29 @@ function withTimeout(promise, ms, label) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
+// 권한 범위 축소(프롬프트 주입 대비): 이 앱은 텍스트 입력 → JSON 출력만 필요하다.
+// 셸 실행/파일 쓰기/URL 접근/MCP/확장 권한 등 위험 도구 요청은 거부하고,
+// 무해한 요청만 1회 승인한다. (전면 승인 핸들러 대체)
+const DENY_PERMISSION_KINDS = new Set([
+  "commands",
+  "write",
+  "url",
+  "mcp",
+  "extension-management",
+  "extension-permission-access",
+]);
+function scopedPermission(request) {
+  const kind = request && request.kind;
+  if (DENY_PERMISSION_KINDS.has(kind)) {
+    console.warn("[haru-autopilot] 권한 거부:", kind);
+    return { kind: "reject", feedback: "이 앱은 텍스트 정리만 수행하며 셸/파일/네트워크 권한이 없습니다." };
+  }
+  return { kind: "approve-once" };
+}
+
 async function runAgent(prompt) {
   const client = await getClient();
-  const session = await client.createSession({ model: MODEL, onPermissionRequest: approveAll });
+  const session = await client.createSession({ model: MODEL, onPermissionRequest: scopedPermission });
   try {
     let buffer = "";
     const done = new Promise((resolve) => {
@@ -162,12 +204,12 @@ app.post("/api/plan", async (req, res) => {
     if (!plan) throw new Error("Copilot SDK 응답을 계획으로 구조화하지 못했습니다.");
     return res.json({ source: "copilot-sdk", model: MODEL, authMode: AUTH_MODE, plan });
   } catch (err) {
+    console.error("[/api/plan] SDK 실패, fallback 사용:", err?.message || err);
     return res.json({
       source: "fallback",
       model: null,
       plan: fallbackPlan(input, now),
       notice: "Copilot SDK 미연결 — 오프라인 결정 엔진으로 처리했습니다.",
-      detail: String(err?.message || err),
     });
   }
 });
@@ -185,31 +227,13 @@ app.post("/api/assist", async (req, res) => {
     if (!artifact) throw new Error("Copilot SDK 작업물 생성에 실패했습니다.");
     return res.json({ source: "copilot-sdk", model: MODEL, artifact });
   } catch (err) {
+    console.error("[/api/assist] SDK 실패, fallback 사용:", err?.message || err);
     return res.json({
       source: "fallback",
       artifact: fallbackArtifact(task, type),
       notice: "Copilot SDK 미연결 — 오프라인 템플릿으로 생성했습니다.",
-      detail: String(err?.message || err),
     });
   }
-});
-
-// 진단용(게이트). Azure 런타임 위치 파악. 비밀은 노출하지 않음.
-app.get("/api/_diag", (req, res) => {
-  if ((req.query.key || "") !== "autopilot") return res.status(404).end();
-  const out = { cwd: process.cwd(), dirname: __dirname, resolvedCli: RESOLVED_CLI, envCli: process.env.COPILOT_CLI_PATH || null, authMode: AUTH_MODE };
-  try { out.sdkMain = require.resolve("@github/copilot-sdk"); } catch (e) { out.sdkMain = "ERR " + e.message; }
-  const dir = findCopilotDir();
-  out.copilotDir = dir;
-  if (dir) {
-    try { out.copilotDirList = fs.readdirSync(dir).slice(0, 60); } catch (e) { out.copilotDirList = "ERR " + e.message; }
-    out.hasIndexJs = existing(path.join(dir, "index.js")) ? true : false;
-    out.hasNpmLoader = existing(path.join(dir, "npm-loader.js")) ? true : false;
-  }
-  for (const root of ["/node_modules/@github", path.join(process.cwd(), "node_modules", "@github")]) {
-    try { out["ls:" + root] = fs.readdirSync(root); } catch (e) { out["ls:" + root] = "ERR " + e.code; }
-  }
-  res.json(out);
 });
 
 const port = process.env.PORT || 3000;
