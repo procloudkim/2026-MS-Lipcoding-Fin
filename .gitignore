@@ -32,3 +32,6 @@ test-results/
 .azure/
 .azd/.env
 .deploy-name
+
+# separate projects (이 제출 브랜치의 범위 밖 — 별도 관리)
+side-projects/

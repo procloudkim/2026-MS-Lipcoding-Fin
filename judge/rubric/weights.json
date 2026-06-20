@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "contest": "천하제일 립코딩 2026 본선",
+  "appCategory": "개인 생산성 향상 웹앱",
+  "verdictThresholds": { "ready": 80, "conditional": 60 },
+  "gates": [
+    { "id": "G1", "title": "개인 생산성 향상 웹앱 (카테고리)", "why": "대회 상위 과제 = personal productivity web app" },
+    { "id": "G2", "title": "Copilot SDK 실제·추적가능 사용", "why": "dependency→import→session→endpoint, 가짜 SDK 금지" },
+    { "id": "G3", "title": "Azure 배포 + public URL smoke", "why": "Azure cloud 배포 필수, public URL로 검증" },
+    { "id": "G4", "title": "100% 한국어 UI", "why": "Warm Editorial / 한국어 우선 제약" },
+    { "id": "G5", "title": "로컬 부팅 + 핵심 액션 동작", "why": "메인 페이지 로드 + primary user action 동작" },
+    { "id": "G6", "title": "시크릿 미커밋 / .gitignore 보호", "why": "토큰/키/.env/.azure 미커밋" },
+    { "id": "G7", "title": "리포 루트 PRD.md (심사 Source of Truth)", "why": "대회 제출 필수: AI 심사 에이전트가 PRD.md를 진실의 출처로 사용" }
+  ],
+  "dimensions": [
+    { "id": "productivity", "title": "생산성 가치", "weight": 15, "why": "결정 비용을 줄이는 실제 생산성 워크플로우" },
+    { "id": "sdk-depth", "title": "Copilot SDK 통합 깊이", "weight": 20, "why": "import만이 아니라 session→prompt→message→parse end-to-end" },
+    { "id": "verification", "title": "검증·스모크 증거", "weight": 15, "why": "로컬 API/브라우저/Azure smoke 증거" },
+    { "id": "honesty", "title": "정직성·문서일치", "weight": 15, "why": "env 분리, source 배지, 문서<->코드 일치, 한계 명시" },
+    { "id": "design", "title": "Warm Editorial 디자인", "weight": 15, "why": "베이지/잉크/단일 레드, 상태표현, 반응형" },
+    { "id": "engineering", "title": "엔지니어링 견고성", "weight": 10, "why": "robust 파서/fallback, 에러 상태, 시크릿 안전" },
+    { "id": "docs", "title": "문서·의사결정 기록", "weight": 10, "why": "README 실행명령 일치, ADR/evidence 트레이스" }
+  ],
+  "scoring": {
+    "statusValue": { "PASS": 1, "WARN": 0.5, "FAIL": 0, "SKIP": null },
+    "note": "차원 점수 = Σ(weight·statusValue)/Σ(weight) (SKIP 제외). 총점 = Σ(차원점수·차원weight)/Σ(평가된 차원weight)·100.",
+    "gateRule": "게이트 체크가 하나라도 FAIL이면 해당 게이트 FAIL. WARN은 게이트 통과(경고). SKIP 게이트는 CONDITIONAL.",
+    "verdict": "게이트 FAIL 존재→BLOCK. 전 게이트 PASS & 총점>=ready→READY. 그 외(게이트 SKIP 또는 conditional<=총점<ready)→CONDITIONAL."
+  },
+  "security": {
+    "note": "보안 advisory는 100점 제품 점수와 분리. 발견된 최악 severity로 등급 결정. 하드코딩/추적 시크릿은 G6 게이트에도 반영되어 BLOCK 가능.",
+    "severityOrder": ["critical", "high", "medium", "low", "info"],
+    "grade": { "critical": "D", "high": "C", "medium": "B", "low": "A", "clean": "A+" },
+    "gradeMeaning": { "D": "배포 보류 권고", "C": "배포 전 수정 권고", "B": "개선 권장", "A": "양호", "A+": "이슈 없음" },
+    "checks": ["진단/디버그 엔드포인트 노출", "에러 원문 유출", "보안 헤더(helmet)", "CORS", "SDK 자동권한(approveAll)", "본문 크기 제한", "하드코딩 시크릿", ".npmrc 토큰", "커밋 아카이브", "git 추적 시크릿", "npm audit(opt-in)"]
+  }
+}
