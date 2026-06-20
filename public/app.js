@@ -113,7 +113,16 @@ function render(data) {
 
   renderList(els.sources, els.sourcesBlock, b.sources, (s) => {
     const li = el("li", "src");
-    li.append(el("div", "src__name", s.name), el("div", "src__why", s.why || ""));
+    let nameNode;
+    if (s.url) {
+      nameNode = el("a", "src__name src__link", s.name);
+      nameNode.href = s.url;
+      nameNode.target = "_blank";
+      nameNode.rel = "noopener noreferrer";
+    } else {
+      nameNode = el("div", "src__name", s.name);
+    }
+    li.append(nameNode, el("div", "src__why", s.why || ""));
     return li;
   });
 

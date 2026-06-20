@@ -143,6 +143,9 @@ html, body {
 .alt { padding: 9px 13px; background: var(--ok-soft); border: 1px solid #b9d4b9; border-radius: var(--radius); font-size: 14px; color: #275c2b; }
 .src { padding: 10px 13px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .src__name { font-weight: 700; font-size: 14px; }
+.src__link { color: var(--info); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.src__link::after { content: "↗"; font-size: 12px; color: var(--muted); }
+.src__link:hover { text-decoration: underline; color: var(--accent); }
 .src__why { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 .disclaimer { margin: 4px 0 0; padding: 11px 13px; font-size: 12px; color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line-strong); border-radius: var(--radius); }
