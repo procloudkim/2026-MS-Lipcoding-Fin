@@ -31,3 +31,4 @@ test-results/
 # local cloud/deploy state
 .azure/
 .azd/.env
+.deploy-name

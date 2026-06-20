@@ -18,8 +18,20 @@
 | 제약 | 상태 | 증거 |
 | --- | --- | --- |
 | Copilot SDK 실제 사용 | ✅ PASS (로컬 실동작 확인) | `source: "copilot-sdk"` 응답, 아래 6개 증거 |
-| Azure 배포 + public URL | ⏳ 배포 절에 URL 기재 | `az webapp up` |
+| Azure 배포 + public URL | ✅ PASS | https://haru-jeongri-20260620122907.azurewebsites.net |
 | 100% 한국어 UI / Warm Editorial | ✅ | `public/` 스크린샷 |
+
+## 라이브 / 배포 (Azure)
+
+- **Live URL**: https://haru-jeongri-20260620122907.azurewebsites.net
+- 리소스그룹 `rg-haru-jeongri` · koreacentral · Linux · SKU **F1(Free)** · **NODE:24-lts**
+- 배포: `az webapp up` (Oryx 빌드 → `npm start`)
+- **public URL smoke (PASS)**
+  - `GET /` → 200 (앱 렌더)
+  - `GET /api/health` → `{ ok: true }`
+  - `POST /api/copilot` → 200, `source: "fallback"` (Azure 설계대로)
+  - 브라우저 smoke: 입력→정리→Top3/분류/내일 렌더 + "오프라인 정리 모드" 배지
+    ([`docs/evaluation/img/azure-smoke.png`](docs/evaluation/img/azure-smoke.png))
 
 ## Copilot SDK 증거 (6/6)
 

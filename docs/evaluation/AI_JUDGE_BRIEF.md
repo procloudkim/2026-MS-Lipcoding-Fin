@@ -18,7 +18,7 @@
 | 제약 | 상태 | 증거 위치 |
 | --- | --- | --- |
 | Copilot SDK 실제 사용 | PASS | `server.js`, `prep/llm-wiki/10-sdk-evidence.md`, 본 문서 §4 |
-| Azure 배포 + URL | 배포 절(README) | `az webapp up` 결과 URL |
+| Azure 배포 + URL | PASS | https://haru-jeongri-20260620122907.azurewebsites.net (`img/azure-smoke.png`) |
 | 한국어 / Warm Editorial | PASS | `public/`, `img/local-initial.png` |
 
 ## 4. Copilot SDK 증거 (6/6)
