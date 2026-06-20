@@ -31,10 +31,14 @@
 
 ## 핵심 기능
 
+- **안심 가이드 서가** (`GET /api/guide`) — 큐레이션된 안전 주제 10개를 **카드 리스트 + 카테고리 필터**로
+  탐색. 카드 클릭 → **상세 모달**(체크리스트·정보간극·출처링크) → "내 상황으로 물어보기"로 AI 브리프 연결.
 - `POST /api/brief` — 제품/우려 → **안전 브리프**(판정·연령적합성·안전축 근거·정보간극·체크리스트·출처).
-- `GET /api/categories` — MECE 카테고리(수유·위생/목욕·수면·이동/외출·놀이/발달·환경)·안전축·공신력 출처 트리(탐색 UI).
+- `GET /api/categories` — MECE 카테고리·안전축·공신력 출처 트리.
 - `GET /api/health` — 헬스체크.
 
+화면: 좌측 **안심 가이드 서가**(카드+필터+모달) · 우측 **내 상황으로 물어보기**(Copilot SDK 브리프).
+육아 친화 Warm Editorial(마스코트·따뜻한 코랄 악센트·둥근 카드), 100% 한국어, 375~1920 반응형.
 판정: SAFE(안심) · CAUTION(주의) · WARN(경고) · INSUFFICIENT(정보부족).
 공신력 출처: 식약처 · 한국소비자원 · KC(국표원) · 대한소아청소년과학회 · 하정훈 삐뽀삐뽀119 · 맘톡TV · FDA · EU EN71.
 
@@ -65,7 +69,7 @@
 
 ```bash
 npm install
-npm run smoke          # 네트워크 비의존 단위 smoke (46 checks)
+npm run smoke          # 네트워크 비의존 단위 smoke (55 checks)
 npm start              # http://localhost:3000
 ```
 
@@ -81,11 +85,12 @@ npm start
 
 | 종류 | 명령 | 결과 |
 | --- | --- | --- |
-| 단위 | `npm run smoke` | PASS (46 checks) |
+| 단위 | `npm run smoke` | PASS (55 checks) |
 | 헬스 | `GET /api/health` | `{ ok: true, app: "ansim-yuka" }` |
 | 카테고리 | `GET /api/categories` | 6 카테고리 / 4 축 / 8 출처 |
+| 가이드 | `GET /api/guide` | 6 카테고리 / 10 주제(출처 URL 포함) |
 | 브리프 | `POST /api/brief` | `source: copilot-sdk`(로컬) / `fallback`(Azure) |
-| 브라우저 | Playwright | 입력 → 판정/연령/안전축/정보간극/체크리스트/출처 렌더 |
+| 브라우저 | Playwright | 카드→모달→ESC→CTA→브리프 렌더, 375/768/1280 반응형 |
 
 ## 배포 (Azure)
 
@@ -96,12 +101,13 @@ az webapp up --name ansim-yuka-<timestamp> --runtime "NODE:24-lts" --os-type Lin
 ## 프로젝트 구조
 
 ```
-server.js                 Express: 정적 프론트 + /api/brief + /api/categories + /api/health
-lib.js                    seed(카테고리/축/출처/사례) + 프롬프트 + 파싱 + fallback (재사용 코어)
-public/                   index.html · styles.css · app.js (Warm Editorial UI)
-scripts/smoke.js          단위 smoke
+server.js                 Express: 정적 프론트 + /api/brief + /api/guide + /api/categories + /api/health
+lib.js                    seed(카테고리/축/출처/사례) + guideData + 프롬프트 + 파싱 + fallback (재사용 코어)
+public/                   index.html · styles.css · app.js (육아 친화 Warm Editorial UI + 가이드 서가/모달)
+scripts/smoke.js          단위 smoke (55 checks)
 prep/llm-wiki/            기획/근거 트레이스 (LLM-Wiki)
-research/briefs/          MECE 카테고리·안전축·공신력 출처 근거
-docs/evaluation/img/      스모크 스크린샷
+research/briefs/          MECE 카테고리·안전축·공신력 출처 근거 · 데이터 흐름도/맹점
+research/decisions/       악마의 토론(6R) · 디자인 방향
+docs/evaluation/img/      스모크 스크린샷(redesign-*)
 PLANS.md                  계획/결정 로그
 ```

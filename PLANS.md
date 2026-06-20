@@ -35,7 +35,7 @@
 - [x] 로컬 smoke (unit 46 · api · browser real-SDK)
 - [x] Azure 배포 + public URL smoke (http://ansim-yuka-20260620131931.azurewebsites.net)
 - [x] 데이터 흐름도·맹점 브리핑 + 시드확장/출처링크(B4·B7)
-- [ ] **프론트엔드/UX 재구성 (악마의 토론 6라운드 기반)** ← 진행 중
+- [x] **프론트엔드/UX 재구성** (악마의 토론 6R) — 가이드 서가/모달 + 육아 친화 Warm Editorial · Azure 재배포
 
 ## Phase 2 — 프론트엔드/UX 재구성 (계획)
 
