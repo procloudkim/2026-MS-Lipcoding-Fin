@@ -65,9 +65,9 @@ function resolveCliPath() {
 const RESOLVED_CLI = resolveCliPath();
 if (RESOLVED_CLI) {
   process.env.COPILOT_CLI_PATH = RESOLVED_CLI;
-  console.log("[haru-autopilot] resolved Copilot CLI runtime: " + RESOLVED_CLI);
+  console.log("[oh-my-dayauto] resolved Copilot CLI runtime: " + RESOLVED_CLI);
 } else {
-  console.log("[haru-autopilot] Copilot CLI runtime not found; SDK will fall back.");
+  console.log("[oh-my-dayauto] Copilot CLI runtime not found; SDK will fall back.");
 }
 
 // 호스트 TZ와 무관하게 KST 기준 '지금'을 반환한다. (Azure는 UTC 호스트)
@@ -162,7 +162,7 @@ const DENY_PERMISSION_KINDS = new Set([
 function scopedPermission(request) {
   const kind = request && request.kind;
   if (DENY_PERMISSION_KINDS.has(kind)) {
-    console.warn("[haru-autopilot] 권한 거부:", kind);
+    console.warn("[oh-my-dayauto] 권한 거부:", kind);
     return { kind: "reject", feedback: "이 앱은 텍스트 정리만 수행하며 셸/파일/네트워크 권한이 없습니다." };
   }
   return { kind: "approve-once" };
@@ -188,7 +188,7 @@ async function runAgent(prompt) {
 }
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, app: "haru-autopilot", model: MODEL, authMode: AUTH_MODE });
+  res.json({ ok: true, app: "oh-my-dayauto", model: MODEL, authMode: AUTH_MODE });
 });
 
 // 맥락 -> 결정/타임라인/첫 작업물
@@ -238,5 +238,5 @@ app.post("/api/assist", async (req, res) => {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`[haru-autopilot] listening on http://localhost:${port} (model=${MODEL}, auth=${AUTH_MODE})`);
+  console.log(`[oh-my-dayauto] listening on http://localhost:${port} (model=${MODEL}, auth=${AUTH_MODE})`);
 });

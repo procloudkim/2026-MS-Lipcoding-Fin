@@ -1,4 +1,4 @@
-# AI 심사 브리프 — 하루 오토파일럿 (Daily Autopilot)
+# AI 심사 브리프 — Oh-My-DayAuto (Oh-My-DayAuto)
 
 > 7인 AI agent 심사위원용 1페이지. 무엇을, 왜, 어떻게 증명했는지.
 
@@ -17,7 +17,7 @@
 | 제약 | 상태 | 증거 |
 | --- | --- | --- |
 | Copilot SDK 실제 사용 | PASS (로컬+프로덕션) | 라이브 URL `source: copilot-sdk` (토큰 인증) |
-| Azure 배포 + URL | PASS | https://haru-autopilot-20260620130000.azurewebsites.net |
+| Azure 배포 + URL | PASS | https://oh-my-dayauto-20260620130000.azurewebsites.net |
 | 한국어/Warm Editorial/반응형 | PASS | `public/`, `img/azure-sdk-live.png` |
 
 ## 4. Copilot SDK 증거 (6/6)

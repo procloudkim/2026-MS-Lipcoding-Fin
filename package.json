@@ -1,9 +1,9 @@
 {
-  "name": "haru-autopilot",
+  "name": "oh-my-dayauto",
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "하루 오토파일럿 - 결정을 대신 내려주는 하루 운영 에이전트 (Copilot SDK + Azure)",
+  "description": "Oh-My-DayAuto - 결정을 대신 내려주는 하루 운영 에이전트 (Copilot SDK + Azure)",
   "engines": {
     "node": ">=20.19.0"
   },

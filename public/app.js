@@ -12,7 +12,7 @@ const els = {
   decisions: $("decisions"), timeline: $("timeline"),
 };
 
-const STORAGE_KEY = "haru-autopilot:last";
+const STORAGE_KEY = "oh-my-dayauto:last";
 const SAMPLE = [
   "분기 보고서 초안 쓰기", "팀 회의 자료 준비", "고객사에 회신 메일 보내기",
   "저녁에 운동 30분", "부모님께 전화", "세금 서류 확인", "언젠가 사이드 프로젝트 구경",

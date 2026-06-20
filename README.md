@@ -1,11 +1,11 @@
-# 하루 오토파일럿 (Daily Autopilot) — 2026 천하제일 립코딩 본선
+# Oh-My-DayAuto — 2026 천하제일 립코딩 본선
 
 > 개인 생산성 향상 웹앱. 단순 정리가 아니라 **결정 대행**.
 > 오늘의 맥락을 쏟아내면 **GitHub Copilot SDK 에이전트**가
 > 무엇을 먼저 할지·미룰지·버릴지 **결정**하고, 결정된 하루 타임라인과
 > 1순위 작업의 **첫 작업물(초안)** 까지 만들어 준다.
 
-**[🔗 라이브 데모](https://haru-autopilot-20260620130000.azurewebsites.net)** ·
+**[🔗 라이브 데모](https://oh-my-dayauto-20260620130000.azurewebsites.net)** ·
 [📋 PRD](PRD.md) ·
 [🧭 심사 브리프](docs/evaluation/AI_JUDGE_BRIEF.md) ·
 [📝 ADR](docs/adr/) ·
@@ -23,7 +23,7 @@ npm run smoke      # 네트워크 비의존 단위 테스트 (28 PASS)
 npm start          # http://localhost:3000
 
 # (선택) 자체 심사기로 게이트/점수/보안 자동 채점
-npm run judge -- --local --azure-url https://haru-autopilot-20260620130000.azurewebsites.net
+npm run judge -- --local --azure-url https://oh-my-dayauto-20260620130000.azurewebsites.net
 ```
 
 > **자체 심사 결과**: `READY · 100/100 · 보안 A+(발견 0) · P0 게이트 7/7 PASS`
@@ -31,7 +31,7 @@ npm run judge -- --local --azure-url https://haru-autopilot-20260620130000.azure
 
 ## ▶ 라이브
 
-- **Live URL**: https://haru-autopilot-20260620130000.azurewebsites.net
+- **Live URL**: https://oh-my-dayauto-20260620130000.azurewebsites.net
 - 첫 화면이 곧 작업 화면(랜딩 아님). 우상단 배지로 응답 출처(`Copilot SDK 에이전트` / `오프라인 결정 엔진`)를 표시.
 
 ## 심사위원(AI agent) 빠른 안내

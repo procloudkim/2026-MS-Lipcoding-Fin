@@ -4,7 +4,7 @@
 > 프로덕션에서 구동된다(`source: copilot-sdk`, 토큰 인증).
 
 ## 배포 정보
-- Live URL: https://haru-autopilot-20260620130000.azurewebsites.net
+- Live URL: https://oh-my-dayauto-20260620130000.azurewebsites.net
 - Resource group: `rg-haru-jeongri` · Region: koreacentral
 - Plan: `pro.cloud.kim_asp_3139` · OS: Linux · SKU: **B1(Basic)** · **Always On: on**
 - Runtime: NODE|24-lts · 빌드: Oryx(`npm install` → `@github/copilot` 런타임 포함)
@@ -16,8 +16,8 @@
 - `COPILOT_CLI_PATH`는 런타임에서 `resolveCliPath()`가 자동 설정
 
 ## Public URL smoke (PASS)
-- `GET /` → 200, 타이틀 "하루 오토파일럿"
-- `GET /api/health` → `{ ok:true, app:"haru-autopilot", model:"auto", authMode:"token" }`
+- `GET /` → 200, 타이틀 "Oh-My-DayAuto"
+- `GET /api/health` → `{ ok:true, app:"oh-my-dayauto", model:"auto", authMode:"token" }`
 - `POST /api/plan` → **200, `source: copilot-sdk`**, 7 decisions, 타임라인, firstArtifact
 - 브라우저: 입력→실행→결정/타임라인/작업물 렌더, 배지 "Copilot SDK 에이전트",
   푸터 "서버 정상 · 토큰인증" (`img/azure-sdk-live.png`)

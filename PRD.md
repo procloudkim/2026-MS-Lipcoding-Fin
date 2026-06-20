@@ -1,4 +1,4 @@
-# PRD — 하루 오토파일럿 (Haru Autopilot)
+# PRD — Oh-My-DayAuto
 
 > 2026 천하제일 립코딩 본선 제출용 제품 요구사항 문서(Source of Truth).
 > 본 문서는 앱의 목적·범위·동작·검증의 기준이며, 실제 코드(`server.js`, `lib.js`, `public/`)와 일치한다.
@@ -41,7 +41,7 @@
 
 ## 5. Azure 배포 (필수)
 
-- **Live URL**: https://haru-autopilot-20260620130000.azurewebsites.net
+- **Live URL**: https://oh-my-dayauto-20260620130000.azurewebsites.net
 - 리소스그룹 `rg-haru-jeongri` · koreacentral · Linux · F1(Free) · NODE:24-lts · `az webapp up`(Oryx)
 - **public URL smoke (검증됨)**
   - `GET /` → 200 (한국어 앱 렌더)
@@ -88,8 +88,8 @@ npm start          # http://localhost:3000
 
 | 항목 | 값 |
 | --- | --- |
-| 앱 제목 | 하루 오토파일럿 (Haru Autopilot) |
+| 앱 제목 | Oh-My-DayAuto (Oh-My-DayAuto) |
 | 리포지토리 | https://github.com/procloudkim/2026-MS-Lipcoding-Fin |
 | 브랜치 | `천하제일-립코딩-2026-참전` |
-| 배포 URL | https://haru-autopilot-20260620130000.azurewebsites.net |
+| 배포 URL | https://oh-my-dayauto-20260620130000.azurewebsites.net |
 | 실행 명령 | `npm install && npm start` |
