@@ -10,7 +10,30 @@ const els = {
   heroAContent: $("hero-artifact-content"), heroACopy: $("hero-artifact-copy"),
   heroMake: $("hero-make"), heroToggle: $("hero-toggle"),
   decisions: $("decisions"), timeline: $("timeline"),
+  cancel: $("cancel"), steps: $("progress-steps"),
 };
+
+let planAbort = null;
+let stepTimer = null;
+function startProgress() {
+  const items = els.steps ? els.steps.querySelectorAll("li") : [];
+  let i = 0;
+  items.forEach((el) => el.classList.remove("on", "done"));
+  if (items[0]) items[0].classList.add("on");
+  clearInterval(stepTimer);
+  stepTimer = setInterval(() => {
+    if (i < items.length - 1) {
+      items[i].classList.remove("on");
+      items[i].classList.add("done");
+      i += 1;
+      items[i].classList.add("on");
+    }
+  }, 3500);
+}
+function stopProgress() {
+  clearInterval(stepTimer);
+  stepTimer = null;
+}
 
 const STORAGE_KEY = "oh-my-dayauto:last";
 const SAMPLE = [
@@ -116,10 +139,10 @@ function renderDecisions() {
 
     const ctrl = document.createElement("div"); ctrl.className = "decision__ctrl";
     const up = document.createElement("button");
-    up.className = "iconbtn"; up.type = "button"; up.title = "위로"; up.textContent = "↑";
+    up.className = "iconbtn"; up.type = "button"; up.title = "위로"; up.setAttribute("aria-label", d.item + " 우선순위 위로"); up.textContent = "↑";
     up.addEventListener("click", () => moveUp(idx));
     const now = document.createElement("button");
-    now.className = "iconbtn iconbtn--now"; now.type = "button"; now.title = "맨 위로"; now.textContent = "지금으로";
+    now.className = "iconbtn iconbtn--now"; now.type = "button"; now.title = "맨 위로"; now.setAttribute("aria-label", d.item + " 지금 할 일로 올리기"); now.textContent = "지금으로";
     now.addEventListener("click", () => promote(idx));
     ctrl.append(up, now);
 
@@ -179,19 +202,31 @@ async function runPlan() {
   const context = els.ctx.value.trim();
   if (!context) { els.hint.textContent = "먼저 오늘의 맥락을 적어주세요."; els.ctx.focus(); return; }
   els.run.disabled = true; els.hint.textContent = ""; setBadge(null); setState("loading");
+  startProgress();
+  planAbort = new AbortController();
   try {
     const res = await fetch("/api/plan", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ context }),
+      signal: planAbort.signal,
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "요청을 처리하지 못했습니다.");
     applyPlan(data);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ context, data })); } catch (_) {}
   } catch (err) {
-    els.errorDetail.textContent = String(err && err.message ? err.message : err);
-    setState("error");
-  } finally { els.run.disabled = false; }
+    if (err && err.name === "AbortError") {
+      setState("empty");
+      els.hint.textContent = "요청을 취소했어요.";
+    } else {
+      els.errorDetail.textContent = String(err && err.message ? err.message : err);
+      setState("error");
+    }
+  } finally { els.run.disabled = false; planAbort = null; stopProgress(); }
+}
+
+function cancelPlan() {
+  if (planAbort) planAbort.abort();
 }
 
 async function makeHeroArtifact() {
@@ -240,6 +275,7 @@ async function copyHero() {
 }
 
 els.run.addEventListener("click", runPlan);
+els.cancel.addEventListener("click", cancelPlan);
 els.retry.addEventListener("click", runPlan);
 els.heroMake.addEventListener("click", makeHeroArtifact);
 els.heroACopy.addEventListener("click", copyHero);

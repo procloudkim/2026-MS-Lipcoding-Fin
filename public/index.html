@@ -65,7 +65,12 @@
         <div id="loading-state" class="state state--loading" hidden>
           <span class="spinner" aria-hidden="true"></span>
           <p class="state__title">에이전트가 오늘을 운영하는 중…</p>
-          <p class="state__desc">우선순위를 결정하고 작업물을 준비하고 있어요.</p>
+          <ol id="progress-steps" class="steps" aria-label="진행 단계">
+            <li data-step="0">맥락 분석</li>
+            <li data-step="1">우선순위 결정</li>
+            <li data-step="2">타임라인·작업물 생성</li>
+          </ol>
+          <button id="cancel" class="btn btn--ghost btn--sm" type="button">취소</button>
         </div>
 
         <div id="error-state" class="state state--error" hidden>
