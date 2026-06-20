@@ -1,42 +1,25 @@
 const $ = (id) => document.getElementById(id);
 
 const els = {
-  ctx: $("context"),
-  run: $("run"),
-  sample: $("sample"),
-  clear: $("clear"),
-  retry: $("retry"),
-  hint: $("hint"),
-  badge: $("source-badge"),
-  empty: $("empty-state"),
-  loading: $("loading-state"),
-  error: $("error-state"),
-  errorDetail: $("error-detail"),
-  result: $("result"),
-  headline: $("headline"),
-  amplify: $("amplify"),
-  decisions: $("decisions"),
-  timeline: $("timeline"),
-  artifactBlock: $("artifact-block"),
-  artifactType: $("artifact-type"),
-  artifactTitle: $("artifact-title"),
-  artifactContent: $("artifact-content"),
-  artifactNote: $("artifact-note"),
-  artifactCopy: $("artifact-copy"),
-  health: $("health"),
+  ctx: $("context"), run: $("run"), sample: $("sample"), clear: $("clear"), retry: $("retry"),
+  hint: $("hint"), badge: $("source-badge"), health: $("health"),
+  empty: $("empty-state"), loading: $("loading-state"), error: $("error-state"), errorDetail: $("error-detail"),
+  result: $("result"), amplify: $("amplify"), rationale: $("rationale"),
+  hero: $("hero"), heroChip: $("hero-chip"), heroItem: $("hero-item"), heroWhy: $("hero-why"),
+  heroArtifact: $("hero-artifact"), heroAType: $("hero-artifact-type"), heroATitle: $("hero-artifact-title"),
+  heroAContent: $("hero-artifact-content"), heroACopy: $("hero-artifact-copy"),
+  heroMake: $("hero-make"), heroToggle: $("hero-toggle"),
+  decisions: $("decisions"), timeline: $("timeline"),
 };
 
 const STORAGE_KEY = "haru-autopilot:last";
-
 const SAMPLE = [
-  "분기 보고서 초안 쓰기",
-  "팀 회의 자료 준비",
-  "고객사에 회신 메일 보내기",
-  "저녁에 운동 30분",
-  "부모님께 전화",
-  "세금 서류 확인",
-  "언젠가 사이드 프로젝트 구경",
+  "분기 보고서 초안 쓰기", "팀 회의 자료 준비", "고객사에 회신 메일 보내기",
+  "저녁에 운동 30분", "부모님께 전화", "세금 서류 확인", "언젠가 사이드 프로젝트 구경",
 ].join("\n");
+
+// 화면 상태: plan + 사용자가 조정한 표시 순서(order) + 히어로 작업물
+const state = { plan: null, order: [], heroArtifact: null, artifactOpen: true };
 
 function setState(name) {
   els.empty.hidden = name !== "empty";
@@ -57,159 +40,177 @@ function setBadge(source) {
   }
 }
 
-function chipClass(verdict) {
-  return "chip chip--" + String(verdict || "").toLowerCase();
-}
+function chipClass(v) { return "chip chip--" + String(v || "").toLowerCase(); }
 
-function renderArtifact(artifact, note) {
-  if (!artifact) { els.artifactBlock.hidden = true; return; }
-  els.artifactBlock.hidden = false;
-  els.artifactType.textContent = artifact.typeKo || artifact.type || "작업물";
-  els.artifactTitle.textContent = artifact.title || "";
-  els.artifactContent.textContent = artifact.content || "";
-  els.artifactNote.textContent = note || "";
-}
-
-function render(data) {
-  const plan = data.plan || {};
-  els.headline.textContent = plan.headline || "";
-
-  const amp = plan.amplify || {};
+function renderAmplify(amp) {
   els.amplify.innerHTML = "";
   [
     [amp.decisionsMade ?? 0, "결정 대행"],
     [amp.artifactsDrafted ?? 0, "초안 생성"],
     ["약 " + (amp.minutesSaved ?? 0) + "분", "절약 추정"],
-  ].forEach(([num, label]) => {
-    const chip = document.createElement("div");
-    chip.className = "amplify__chip";
-    const n = document.createElement("div");
-    n.className = "amplify__num";
-    n.textContent = num;
-    const l = document.createElement("div");
-    l.className = "amplify__label";
-    l.textContent = label;
-    chip.append(n, l);
-    els.amplify.appendChild(chip);
+  ].forEach(([n, label]) => {
+    const c = document.createElement("div"); c.className = "amplify__chip";
+    const nn = document.createElement("div"); nn.className = "amplify__num"; nn.textContent = n;
+    const l = document.createElement("div"); l.className = "amplify__label"; l.textContent = label;
+    c.append(nn, l); els.amplify.appendChild(c);
   });
+}
 
+function showHeroArtifact(artifact) {
+  if (!artifact) { els.heroArtifact.hidden = true; els.heroToggle.hidden = true; return; }
+  els.heroAType.textContent = artifact.typeKo || artifact.type || "작업물";
+  els.heroATitle.textContent = artifact.title || "";
+  els.heroAContent.textContent = artifact.content || "";
+  els.heroArtifact.hidden = !state.artifactOpen;
+  els.heroToggle.hidden = false;
+  els.heroToggle.textContent = state.artifactOpen ? "초안 접기" : "초안 보기";
+}
+
+function renderHero() {
+  const top = state.plan.decisions[state.order[0]];
+  if (!top) return;
+  els.heroChip.className = chipClass(top.verdict);
+  els.heroChip.textContent = top.verdictKo || top.verdict;
+  els.heroItem.textContent = top.item;
+  els.heroWhy.textContent = top.why || "";
+
+  // 히어로 작업물: 원본 firstArtifact가 이 항목이면 표시, 아니면 '초안 만들기'
+  const fa = state.plan.firstArtifact;
+  const matched = state.heroArtifact
+    ? state.heroArtifact
+    : (fa && fa.forItem && fa.forItem === top.item ? fa : null);
+  if (matched) {
+    state.heroArtifact = matched;
+    showHeroArtifact(matched);
+    els.heroMake.hidden = true;
+  } else {
+    els.heroArtifact.hidden = true;
+    els.heroToggle.hidden = true;
+    els.heroMake.hidden = false;
+    els.heroMake.textContent = "이 작업 초안 만들기";
+    els.heroMake.disabled = false;
+  }
+}
+
+function renderDecisions() {
   els.decisions.innerHTML = "";
-  (plan.decisions || []).forEach((d) => {
+  state.order.slice(1).forEach((idx) => {
+    const d = state.plan.decisions[idx];
     const li = document.createElement("li");
     li.className = "decision" + (d.verdict === "DROP" ? " decision--drop" : "");
 
+    const rank = document.createElement("div");
+    rank.className = "decision__rank"; rank.textContent = state.order.indexOf(idx) + 1;
+
     const chip = document.createElement("span");
-    chip.className = chipClass(d.verdict);
-    chip.textContent = d.verdictKo || d.verdict;
+    chip.className = chipClass(d.verdict); chip.textContent = d.verdictKo || d.verdict;
 
-    const body = document.createElement("div");
-    body.className = "decision__body";
-    const item = document.createElement("div");
-    item.className = "decision__item";
+    const body = document.createElement("div"); body.className = "decision__body";
+    const item = document.createElement("div"); item.className = "decision__item";
     item.textContent = d.item;
-    const why = document.createElement("div");
-    why.className = "decision__why";
-    why.textContent = d.why || "";
+    if (d.when) { const w = document.createElement("span"); w.className = "decision__when"; w.textContent = "⏱ " + d.when; item.appendChild(w); }
+    const why = document.createElement("div"); why.className = "decision__why"; why.textContent = d.why || "";
     body.append(item, why);
-    if (d.when) {
-      const when = document.createElement("span");
-      when.className = "decision__when";
-      when.textContent = "⏱ " + d.when;
-      body.appendChild(when);
-    }
+    body.style.cursor = "pointer";
+    body.addEventListener("click", () => li.classList.toggle("open"));
 
-    li.append(chip, body);
+    const ctrl = document.createElement("div"); ctrl.className = "decision__ctrl";
+    const up = document.createElement("button");
+    up.className = "iconbtn"; up.type = "button"; up.title = "위로"; up.textContent = "↑";
+    up.addEventListener("click", () => moveUp(idx));
+    const now = document.createElement("button");
+    now.className = "iconbtn iconbtn--now"; now.type = "button"; now.title = "맨 위로"; now.textContent = "지금으로";
+    now.addEventListener("click", () => promote(idx));
+    ctrl.append(up, now);
 
-    if (d.verdict === "DO_NOW" || d.verdict === "SCHEDULE") {
-      const btn = document.createElement("button");
-      btn.className = "btn btn--mini decision__assist";
-      btn.type = "button";
-      btn.textContent = "시작 도와줘";
-      btn.addEventListener("click", () => assist(d.item, btn));
-      li.appendChild(btn);
-    }
+    li.append(rank, chip, body, ctrl);
     els.decisions.appendChild(li);
   });
+}
 
+function renderTimeline() {
   els.timeline.innerHTML = "";
-  (plan.timeline || []).forEach((b) => {
-    const li = document.createElement("li");
-    li.className = "tl";
-    const time = document.createElement("div");
-    time.className = "tl__time";
-    time.textContent = b.time || "";
-    const right = document.createElement("div");
-    const block = document.createElement("div");
-    block.className = "tl__block";
-    block.textContent = b.block || "";
-    const focus = document.createElement("div");
-    focus.className = "tl__focus";
-    focus.textContent = b.focus || "";
-    right.append(block, focus);
-    li.append(time, right);
-    els.timeline.appendChild(li);
+  (state.plan.timeline || []).forEach((b) => {
+    const li = document.createElement("li"); li.className = "tl";
+    const t = document.createElement("div"); t.className = "tl__time"; t.textContent = b.time || "";
+    const r = document.createElement("div");
+    const bl = document.createElement("div"); bl.className = "tl__block"; bl.textContent = b.block || "";
+    const f = document.createElement("div"); f.className = "tl__focus"; f.textContent = b.focus || "";
+    r.append(bl, f); li.append(t, r); els.timeline.appendChild(li);
   });
+}
 
-  const fa = plan.firstArtifact;
-  renderArtifact(fa, fa ? "에이전트가 1순위 작업을 위해 미리 만든 초안입니다." : "");
+function renderAll() {
+  renderAmplify(state.plan.amplify || {});
+  els.rationale.textContent = state.plan.orderRationale || "마감·영향·시간 민감도를 기준으로 정렬했어요.";
+  renderHero();
+  renderDecisions();
+  renderTimeline();
+  setState("result");
+}
 
+function moveUp(idx) {
+  const pos = state.order.indexOf(idx);
+  if (pos <= 0) return;
+  [state.order[pos - 1], state.order[pos]] = [state.order[pos], state.order[pos - 1]];
+  if (pos - 1 === 0) state.heroArtifact = null; // 히어로 교체 → 작업물 재생성 유도
+  state.artifactOpen = true;
+  renderAll();
+}
+function promote(idx) {
+  state.order = [idx, ...state.order.filter((i) => i !== idx)];
+  state.heroArtifact = null;
+  state.artifactOpen = true;
+  renderAll();
+  els.hero.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function applyPlan(data) {
+  state.plan = data.plan;
+  state.order = data.plan.decisions.map((_, i) => i);
+  state.heroArtifact = null;
+  state.artifactOpen = true;
   setBadge(data.source);
   els.hint.textContent = data.notice || "";
-  setState("result");
+  renderAll();
 }
 
 async function runPlan() {
   const context = els.ctx.value.trim();
-  if (!context) {
-    els.hint.textContent = "먼저 오늘의 맥락을 적어주세요.";
-    els.ctx.focus();
-    return;
-  }
-  els.run.disabled = true;
-  els.hint.textContent = "";
-  setBadge(null);
-  setState("loading");
+  if (!context) { els.hint.textContent = "먼저 오늘의 맥락을 적어주세요."; els.ctx.focus(); return; }
+  els.run.disabled = true; els.hint.textContent = ""; setBadge(null); setState("loading");
   try {
     const res = await fetch("/api/plan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ context }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "요청을 처리하지 못했습니다.");
-    render(data);
+    applyPlan(data);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ context, data })); } catch (_) {}
   } catch (err) {
     els.errorDetail.textContent = String(err && err.message ? err.message : err);
     setState("error");
-  } finally {
-    els.run.disabled = false;
-  }
+  } finally { els.run.disabled = false; }
 }
 
-async function assist(task, btn) {
-  const original = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "생성 중…";
+async function makeHeroArtifact() {
+  const top = state.plan.decisions[state.order[0]];
+  if (!top) return;
+  els.heroMake.disabled = true; els.heroMake.textContent = "생성 중…";
   try {
     const res = await fetch("/api/assist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task }),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task: top.item }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "작업물 생성 실패");
-    const note =
-      (data.source === "copilot-sdk"
-        ? "Copilot SDK 에이전트가 생성한 초안"
-        : "오프라인 템플릿으로 생성") + " · " + task;
-    renderArtifact(data.artifact, note);
-    els.artifactBlock.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    state.heroArtifact = data.artifact;
+    state.artifactOpen = true;
+    renderHero();
   } catch (err) {
-    els.artifactNote.textContent = "생성 실패: " + (err.message || err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = original;
+    els.heroMake.disabled = false; els.heroMake.textContent = "다시 시도";
+    els.hint.textContent = "초안 생성 실패: " + (err.message || err);
   }
 }
 
@@ -219,44 +220,34 @@ function restore() {
     if (!saved) return;
     const { context, data } = JSON.parse(saved);
     if (context) els.ctx.value = context;
-    if (data && data.plan) render(data);
+    if (data && data.plan) applyPlan(data);
   } catch (_) {}
 }
 
 async function checkHealth() {
   try {
-    const res = await fetch("/api/health");
-    const data = await res.json();
+    const res = await fetch("/api/health"); const data = await res.json();
     const mode = data.authMode === "token" ? " · 토큰인증" : "";
     els.health.textContent = (data.ok ? "서버 정상" : "서버 점검 필요") + mode;
-    els.health.className = "footer__health " + (data.ok ? "ok" : "down");
-  } catch (_) {
-    els.health.textContent = "서버 연결 안 됨";
-    els.health.className = "footer__health down";
-  }
+    els.health.className = "health " + (data.ok ? "ok" : "down");
+  } catch (_) { els.health.textContent = "서버 연결 안 됨"; els.health.className = "health down"; }
 }
 
-async function copyArtifact() {
-  try {
-    await navigator.clipboard.writeText(els.artifactContent.textContent || "");
-    els.artifactCopy.textContent = "복사됨";
-    setTimeout(() => (els.artifactCopy.textContent = "복사"), 1500);
+async function copyHero() {
+  try { await navigator.clipboard.writeText(els.heroAContent.textContent || "");
+    els.heroACopy.textContent = "복사됨"; setTimeout(() => (els.heroACopy.textContent = "복사"), 1500);
   } catch (_) {}
 }
 
 els.run.addEventListener("click", runPlan);
 els.retry.addEventListener("click", runPlan);
-els.artifactCopy.addEventListener("click", copyArtifact);
-els.sample.addEventListener("click", () => {
-  els.ctx.value = SAMPLE;
-  els.hint.textContent = "예시를 채웠어요. 오토파일럿을 실행해 보세요.";
-  els.ctx.focus();
-});
+els.heroMake.addEventListener("click", makeHeroArtifact);
+els.heroACopy.addEventListener("click", copyHero);
+els.heroToggle.addEventListener("click", () => { state.artifactOpen = !state.artifactOpen; showHeroArtifact(state.heroArtifact); });
+els.sample.addEventListener("click", () => { els.ctx.value = SAMPLE; els.hint.textContent = "예시를 채웠어요. 오토파일럿을 실행해 보세요."; els.ctx.focus(); });
 els.clear.addEventListener("click", () => {
-  els.ctx.value = "";
-  els.hint.textContent = "";
-  setBadge(null);
-  setState("empty");
+  els.ctx.value = ""; els.hint.textContent = ""; setBadge(null); setState("empty");
+  state.plan = null; state.order = [];
   try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
   els.ctx.focus();
 });

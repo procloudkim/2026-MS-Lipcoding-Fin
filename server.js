@@ -69,6 +69,23 @@ if (RESOLVED_CLI) {
   console.log("[haru-autopilot] Copilot CLI runtime not found; SDK will fall back.");
 }
 
+// 호스트 TZ와 무관하게 KST 기준 '지금'을 반환한다. (Azure는 UTC 호스트)
+function nowKST() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Seoul",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    }).formatToParts(new Date());
+    const g = (t) => Number(parts.find((p) => p.type === t)?.value);
+    let hh = g("hour");
+    if (hh === 24) hh = 0;
+    return new Date(g("year"), g("month") - 1, g("day"), hh, g("minute"), g("second"));
+  } catch {
+    return new Date();
+  }
+}
+
 const app = express();
 app.use(express.json({ limit: "256kb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -138,8 +155,9 @@ app.post("/api/plan", async (req, res) => {
   if (!input) {
     return res.status(400).json({ error: "EMPTY_INPUT", message: "오늘의 맥락을 입력해주세요." });
   }
+  const now = nowKST();
   try {
-    const raw = await runAgent(buildPlanPrompt(input));
+    const raw = await runAgent(buildPlanPrompt(input, now));
     const plan = normalizePlan(parseJson(raw));
     if (!plan) throw new Error("Copilot SDK 응답을 계획으로 구조화하지 못했습니다.");
     return res.json({ source: "copilot-sdk", model: MODEL, authMode: AUTH_MODE, plan });
@@ -147,7 +165,7 @@ app.post("/api/plan", async (req, res) => {
     return res.json({
       source: "fallback",
       model: null,
-      plan: fallbackPlan(input),
+      plan: fallbackPlan(input, now),
       notice: "Copilot SDK 미연결 — 오프라인 결정 엔진으로 처리했습니다.",
       detail: String(err?.message || err),
     });

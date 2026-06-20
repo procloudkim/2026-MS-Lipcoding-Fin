@@ -18,8 +18,8 @@
 | 의사결정 기록(ADR) | [`docs/adr/`](docs/adr/) |
 | SDK 사용 증거 | 본 문서 §"Copilot SDK 증거" + [`prep/llm-wiki/10-sdk-evidence.md`](prep/llm-wiki/10-sdk-evidence.md) |
 | 배포 증거 | [`prep/llm-wiki/20-deploy-evidence.md`](prep/llm-wiki/20-deploy-evidence.md) |
-| 핵심 코드 | [`server.js`](server.js)(SDK 에이전트) · [`lib.js`](lib.js)(프롬프트/파싱/fallback) · [`public/`](public/)(UI) |
-| 스크린샷 | [`docs/evaluation/img/azure-sdk-live.png`](docs/evaluation/img/azure-sdk-live.png)(프로덕션 SDK), `local-autopilot.png`(로컬) |
+| 핵심 코드 | [`server.js`](server.js)(SDK 에이전트·런타임 해석·KST) · [`lib.js`](lib.js)(프롬프트/정렬/파싱/fallback) · [`public/`](public/)(UI) |
+| 스크린샷 | [`docs/evaluation/img/azure-sdk-live.png`](docs/evaluation/img/azure-sdk-live.png)(프로덕션 SDK), `local-redesign.png`(재설계 UI) |
 
 ## P0 제약 충족 현황
 
@@ -34,9 +34,15 @@
 생산성 = "다음에 뭘 할지" **결정 비용**을 줄이고 실행·마무리까지 잇는 것.
 그래서 이 앱은 또 하나의 할 일 목록이 아니라, **결정을 대신 내려주는 하루 운영 에이전트**다.
 
-1. 맥락 입력(자유 텍스트) → 2. 에이전트가 **결정**(DO_NOW/SCHEDULE/DEFER/DROP/DELEGATE) →
-3. **결정된 하루** 타임라인 + 1순위 작업의 **첫 작업물** 생성 →
-4. 각 작업의 `시작 도와줘`로 추가 작업물(메일/안건/체크리스트) 즉시 생성.
+1. 맥락 입력(자유 텍스트) → 2. 에이전트가 **결정**(DO_NOW/SCHEDULE/DEFER/DELEGATE/DROP) →
+3. **"지금, 이거 하나"** 히어로 + 결정된 흐름 + 1순위 작업의 **첫 작업물** →
+4. `위로`/`지금으로`로 사용자가 우선순위를 조정(통제권), 각 작업 `초안 만들기`로 작업물 생성.
+
+### 투명성 원칙 (입력 순서 ≠ 우선순위)
+사용자가 적은 **입력 순서를 그대로 따르지 않는다.** 에이전트는 **마감·영향·시간 민감도·타인 의존도**로
+재정렬하고, 화면 상단 배너(`orderRationale`)에 "왜 이 순서인지"를 명시한다. 타임라인도 고정 09:00이
+아니라 **현재 시각(KST) 이후**의 현실적 시간으로 배치한다. → "내가 1번으로 적어서 1번이 된 것 아니냐"는
+오해를 제거.
 
 ## Copilot SDK 증거 (6/6)
 
