@@ -25,6 +25,7 @@ coverage/
 # test output
 playwright-report/
 test-results/
+.playwright-mcp/
 *.log
 
 # local cloud/deploy state
