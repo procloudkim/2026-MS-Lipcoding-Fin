@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lipcoding Git Hygiene"
+  short_description: "Keep commits, .gitignore, and secrets safe during Lipcoding."
+  default_prompt: "Check this repo for safe .gitignore, commit boundaries, and files that must not be committed during Lipcoding."
