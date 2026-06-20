@@ -1,17 +1,19 @@
 {
-  "name": "haru-jeongri",
-  "version": "0.1.0",
+  "name": "haru-autopilot",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "하루 정리 - 개인 생산성 향상 웹앱 (Copilot SDK + Azure)",
+  "description": "하루 오토파일럿 - 결정을 대신 내려주는 하루 운영 에이전트 (Copilot SDK + Azure)",
   "engines": {
     "node": ">=20.19.0"
   },
   "scripts": {
     "start": "node server.js",
-    "smoke": "node scripts/smoke.js"
+    "smoke": "node scripts/smoke.js",
+    "judge": "node judge/checks/run-all.mjs"
   },
   "dependencies": {
+    "@github/copilot": "^1.0.63",
     "@github/copilot-sdk": "^1.0.2",
     "express": "^4.21.2"
   }

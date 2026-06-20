@@ -1,8 +1,8 @@
 const $ = (id) => document.getElementById(id);
 
 const els = {
-  dump: $("brain-dump"),
-  organize: $("organize"),
+  ctx: $("context"),
+  run: $("run"),
   sample: $("sample"),
   clear: $("clear"),
   retry: $("retry"),
@@ -13,22 +13,29 @@ const els = {
   error: $("error-state"),
   errorDetail: $("error-detail"),
   result: $("result"),
-  summary: $("summary"),
-  top3: $("top3"),
-  categories: $("categories"),
-  tomorrow: $("tomorrow"),
+  headline: $("headline"),
+  amplify: $("amplify"),
+  decisions: $("decisions"),
+  timeline: $("timeline"),
+  artifactBlock: $("artifact-block"),
+  artifactType: $("artifact-type"),
+  artifactTitle: $("artifact-title"),
+  artifactContent: $("artifact-content"),
+  artifactNote: $("artifact-note"),
+  artifactCopy: $("artifact-copy"),
   health: $("health"),
 };
 
-const STORAGE_KEY = "haru-jeongri:last";
+const STORAGE_KEY = "haru-autopilot:last";
 
 const SAMPLE = [
   "분기 보고서 초안 쓰기",
   "팀 회의 자료 준비",
+  "고객사에 회신 메일 보내기",
   "저녁에 운동 30분",
-  "부모님께 전화드리기",
+  "부모님께 전화",
   "세금 서류 확인",
-  "밀린 이메일 답장",
+  "언젠가 사이드 프로젝트 구경",
 ].join("\n");
 
 function setState(name) {
@@ -39,102 +46,170 @@ function setState(name) {
 }
 
 function setBadge(source) {
-  if (!source) {
-    els.badge.hidden = true;
-    return;
-  }
+  if (!source) { els.badge.hidden = true; return; }
   els.badge.hidden = false;
   if (source === "copilot-sdk") {
-    els.badge.textContent = "Copilot SDK";
+    els.badge.textContent = "Copilot SDK 에이전트";
     els.badge.className = "badge badge--sdk";
   } else {
-    els.badge.textContent = "오프라인 정리 모드";
+    els.badge.textContent = "오프라인 결정 엔진";
     els.badge.className = "badge badge--fallback";
   }
 }
 
+function chipClass(verdict) {
+  return "chip chip--" + String(verdict || "").toLowerCase();
+}
+
+function renderArtifact(artifact, note) {
+  if (!artifact) { els.artifactBlock.hidden = true; return; }
+  els.artifactBlock.hidden = false;
+  els.artifactType.textContent = artifact.typeKo || artifact.type || "작업물";
+  els.artifactTitle.textContent = artifact.title || "";
+  els.artifactContent.textContent = artifact.content || "";
+  els.artifactNote.textContent = note || "";
+}
+
 function render(data) {
-  const r = data.result || {};
-  els.summary.textContent = r.summary || "";
-  els.summary.hidden = !r.summary;
+  const plan = data.plan || {};
+  els.headline.textContent = plan.headline || "";
 
-  els.top3.innerHTML = "";
-  (r.top3 || []).forEach((it) => {
+  const amp = plan.amplify || {};
+  els.amplify.innerHTML = "";
+  [
+    [amp.decisionsMade ?? 0, "결정 대행"],
+    [amp.artifactsDrafted ?? 0, "초안 생성"],
+    ["약 " + (amp.minutesSaved ?? 0) + "분", "절약 추정"],
+  ].forEach(([num, label]) => {
+    const chip = document.createElement("div");
+    chip.className = "amplify__chip";
+    const n = document.createElement("div");
+    n.className = "amplify__num";
+    n.textContent = num;
+    const l = document.createElement("div");
+    l.className = "amplify__label";
+    l.textContent = label;
+    chip.append(n, l);
+    els.amplify.appendChild(chip);
+  });
+
+  els.decisions.innerHTML = "";
+  (plan.decisions || []).forEach((d) => {
     const li = document.createElement("li");
-    const title = document.createElement("div");
-    title.className = "t-title";
-    title.textContent = it.title || "";
-    li.appendChild(title);
-    if (it.reason) {
-      const reason = document.createElement("div");
-      reason.className = "t-reason";
-      reason.textContent = it.reason;
-      li.appendChild(reason);
+    li.className = "decision" + (d.verdict === "DROP" ? " decision--drop" : "");
+
+    const chip = document.createElement("span");
+    chip.className = chipClass(d.verdict);
+    chip.textContent = d.verdictKo || d.verdict;
+
+    const body = document.createElement("div");
+    body.className = "decision__body";
+    const item = document.createElement("div");
+    item.className = "decision__item";
+    item.textContent = d.item;
+    const why = document.createElement("div");
+    why.className = "decision__why";
+    why.textContent = d.why || "";
+    body.append(item, why);
+    if (d.when) {
+      const when = document.createElement("span");
+      when.className = "decision__when";
+      when.textContent = "⏱ " + d.when;
+      body.appendChild(when);
     }
-    els.top3.appendChild(li);
+
+    li.append(chip, body);
+
+    if (d.verdict === "DO_NOW" || d.verdict === "SCHEDULE") {
+      const btn = document.createElement("button");
+      btn.className = "btn btn--mini decision__assist";
+      btn.type = "button";
+      btn.textContent = "시작 도와줘";
+      btn.addEventListener("click", () => assist(d.item, btn));
+      li.appendChild(btn);
+    }
+    els.decisions.appendChild(li);
   });
 
-  els.categories.innerHTML = "";
-  (r.categories || []).forEach((c) => {
-    const wrap = document.createElement("div");
-    wrap.className = "cat";
-    const name = document.createElement("div");
-    name.className = "cat__name";
-    name.textContent = c.name || "";
-    const ul = document.createElement("ul");
-    ul.className = "cat__items";
-    (c.items || []).forEach((item) => {
-      const li = document.createElement("li");
-      li.textContent = item;
-      ul.appendChild(li);
-    });
-    wrap.appendChild(name);
-    wrap.appendChild(ul);
-    els.categories.appendChild(wrap);
-  });
-
-  els.tomorrow.innerHTML = "";
-  (r.tomorrow || []).forEach((t) => {
+  els.timeline.innerHTML = "";
+  (plan.timeline || []).forEach((b) => {
     const li = document.createElement("li");
-    li.textContent = t;
-    els.tomorrow.appendChild(li);
+    li.className = "tl";
+    const time = document.createElement("div");
+    time.className = "tl__time";
+    time.textContent = b.time || "";
+    const right = document.createElement("div");
+    const block = document.createElement("div");
+    block.className = "tl__block";
+    block.textContent = b.block || "";
+    const focus = document.createElement("div");
+    focus.className = "tl__focus";
+    focus.textContent = b.focus || "";
+    right.append(block, focus);
+    li.append(time, right);
+    els.timeline.appendChild(li);
   });
+
+  const fa = plan.firstArtifact;
+  renderArtifact(fa, fa ? "에이전트가 1순위 작업을 위해 미리 만든 초안입니다." : "");
 
   setBadge(data.source);
   els.hint.textContent = data.notice || "";
   setState("result");
 }
 
-async function organize() {
-  const text = els.dump.value.trim();
-  if (!text) {
-    els.hint.textContent = "먼저 오늘의 메모를 적어주세요.";
-    els.dump.focus();
+async function runPlan() {
+  const context = els.ctx.value.trim();
+  if (!context) {
+    els.hint.textContent = "먼저 오늘의 맥락을 적어주세요.";
+    els.ctx.focus();
     return;
   }
-  els.organize.disabled = true;
+  els.run.disabled = true;
   els.hint.textContent = "";
   setBadge(null);
   setState("loading");
   try {
-    const res = await fetch("/api/copilot", {
+    const res = await fetch("/api/plan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ context }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || "요청을 처리하지 못했습니다.");
-    }
+    if (!res.ok) throw new Error(data.message || "요청을 처리하지 못했습니다.");
     render(data);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ text, data }));
-    } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ context, data })); } catch (_) {}
   } catch (err) {
     els.errorDetail.textContent = String(err && err.message ? err.message : err);
     setState("error");
   } finally {
-    els.organize.disabled = false;
+    els.run.disabled = false;
+  }
+}
+
+async function assist(task, btn) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "생성 중…";
+  try {
+    const res = await fetch("/api/assist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "작업물 생성 실패");
+    const note =
+      (data.source === "copilot-sdk"
+        ? "Copilot SDK 에이전트가 생성한 초안"
+        : "오프라인 템플릿으로 생성") + " · " + task;
+    renderArtifact(data.artifact, note);
+    els.artifactBlock.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    els.artifactNote.textContent = "생성 실패: " + (err.message || err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
   }
 }
 
@@ -142,9 +217,9 @@ function restore() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
-    const { text, data } = JSON.parse(saved);
-    if (text) els.dump.value = text;
-    if (data && data.result) render(data);
+    const { context, data } = JSON.parse(saved);
+    if (context) els.ctx.value = context;
+    if (data && data.plan) render(data);
   } catch (_) {}
 }
 
@@ -152,7 +227,8 @@ async function checkHealth() {
   try {
     const res = await fetch("/api/health");
     const data = await res.json();
-    els.health.textContent = data.ok ? "서버 정상" : "서버 점검 필요";
+    const mode = data.authMode === "token" ? " · 토큰인증" : "";
+    els.health.textContent = (data.ok ? "서버 정상" : "서버 점검 필요") + mode;
     els.health.className = "footer__health " + (data.ok ? "ok" : "down");
   } catch (_) {
     els.health.textContent = "서버 연결 안 됨";
@@ -160,22 +236,29 @@ async function checkHealth() {
   }
 }
 
-els.organize.addEventListener("click", organize);
-els.retry.addEventListener("click", organize);
+async function copyArtifact() {
+  try {
+    await navigator.clipboard.writeText(els.artifactContent.textContent || "");
+    els.artifactCopy.textContent = "복사됨";
+    setTimeout(() => (els.artifactCopy.textContent = "복사"), 1500);
+  } catch (_) {}
+}
+
+els.run.addEventListener("click", runPlan);
+els.retry.addEventListener("click", runPlan);
+els.artifactCopy.addEventListener("click", copyArtifact);
 els.sample.addEventListener("click", () => {
-  els.dump.value = SAMPLE;
-  els.hint.textContent = "예시를 채웠어요. 바로 정리해 보세요.";
-  els.dump.focus();
+  els.ctx.value = SAMPLE;
+  els.hint.textContent = "예시를 채웠어요. 오토파일럿을 실행해 보세요.";
+  els.ctx.focus();
 });
 els.clear.addEventListener("click", () => {
-  els.dump.value = "";
+  els.ctx.value = "";
   els.hint.textContent = "";
   setBadge(null);
   setState("empty");
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (_) {}
-  els.dump.focus();
+  try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+  els.ctx.focus();
 });
 
 setState("empty");
