@@ -65,7 +65,7 @@
 
 ```bash
 npm install
-npm run smoke          # 네트워크 비의존 단위 smoke (31 checks)
+npm run smoke          # 네트워크 비의존 단위 smoke (46 checks)
 npm start              # http://localhost:3000
 ```
 
@@ -81,7 +81,7 @@ npm start
 
 | 종류 | 명령 | 결과 |
 | --- | --- | --- |
-| 단위 | `npm run smoke` | PASS (31 checks) |
+| 단위 | `npm run smoke` | PASS (46 checks) |
 | 헬스 | `GET /api/health` | `{ ok: true, app: "ansim-yuka" }` |
 | 카테고리 | `GET /api/categories` | 6 카테고리 / 4 축 / 8 출처 |
 | 브리프 | `POST /api/brief` | `source: copilot-sdk`(로컬) / `fallback`(Azure) |
