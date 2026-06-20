@@ -28,13 +28,15 @@
 - stop rule: 16:30 KST 이후 기능 동결.
 - final eval: `/api/health` ok + `/api/brief` 스키마 충족 + browser 렌더 + Azure URL smoke.
 
-## Decision Log (append)
-- D1 컨셉/스택 확정(00-event-brief D1~D4).
-- (예정) SDK 실동작·Azure 결과 기록.
-
 ## Status
 - [x] 워크트리 분리(`안심육아-립코딩-2026`)
 - [x] 기획(LLM-Wiki·trace graph·sources brief)
-- [ ] 앱 구현
-- [ ] 로컬 smoke
-- [ ] Azure 배포
+- [x] 앱 구현 (lib/server/public/smoke)
+- [x] 로컬 smoke (unit 31 · api · browser real-SDK)
+- [x] Azure 배포 + public URL smoke (http://ansim-yuka-20260620131931.azurewebsites.net)
+
+## Decision Log (append)
+- D1 컨셉/스택 확정(00-event-brief D1~D4).
+- D2 로컬 `source: copilot-sdk` 실동작 확인(10-sdk-evidence) — 비결정적 비순응 응답은 fallback로 안전 전환.
+- D3 Azure 배포 완료, `source: fallback`로 가용성 유지(20-deploy-evidence). 정직한 환경 분리.
+- OPEN: 최종 제품명 확정(가제 "안심육아 브리프") · 카테고리 seed 확장.

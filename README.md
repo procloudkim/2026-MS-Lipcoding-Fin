@@ -19,8 +19,15 @@
 | 제약 | 상태 | 증거 |
 | --- | --- | --- |
 | Copilot SDK 실제 사용 | ✅ PASS (로컬 실동작) | `source: "copilot-sdk"` 응답 · `prep/llm-wiki/10-sdk-evidence.md` |
-| Azure 배포 + public URL | 🟡 READY | `prep/llm-wiki/20-deploy-evidence.md` (배포 후 URL 기록) |
+| Azure 배포 + public URL | ✅ PASS | http://ansim-yuka-20260620131931.azurewebsites.net · `prep/llm-wiki/20-deploy-evidence.md` |
 | 100% 한국어 UI / Warm Editorial | ✅ | `public/` · 스크린샷 |
+
+## 라이브 (Azure)
+
+- **Live URL**: http://ansim-yuka-20260620131931.azurewebsites.net
+- 리소스그룹 `rg-ansim-yuka`(하루정리와 분리) · koreacentral · Linux · F1(Free) · NODE:24-lts
+- public URL smoke PASS: `GET /`=200 · `GET /api/health`=`{ok:true}` · `GET /api/categories`=6/4/8 ·
+  `POST /api/brief`=200 `source:fallback`(Azure 설계대로) · 브라우저 "오프라인 근거 엔진" 배지
 
 ## 핵심 기능
 
