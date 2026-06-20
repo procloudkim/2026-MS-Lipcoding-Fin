@@ -66,4 +66,21 @@ Records:
 - D3 Azure 배포 완료, `source: fallback`로 가용성 유지(20-deploy-evidence). 정직한 환경 분리.
 - D4 시드 3→10·출처 URL 링크(B4·B7) 적용·재배포.
 - D5 **프론트 재구성: vanilla 유지 + 가이드 서가/모달 추가 + 육아 친화 Warm Editorial. React=DEFER**(악마의 토론 6R 합의 KEEP).
-- OPEN: 최종 제품명 확정 · 가이드/브리프 탭 내비(DEFER) · 제품 비교(DEFER, 제품DB 필요).
+- D6 **가치 재정의: "구매 전 안전 결정 지원"**(악마의 토론 10R 합의 KEEP, `research/decisions/debate-what-to-buy.md`).
+  `/api/brief`에 `recommendation`(추천 사양·피할 것·(조건부)후보 유형) + 개인화 칩. **브랜드 추천 금지·추천 INSUFFICIENT 규율.**
+- OPEN: 최종 제품명 확정 · 후보 유형 근거 확충 · 예산축/제품 DB(DEFER).
+
+## Phase 3 — 구매 전 결정 지원 (계획, 미구현)
+
+목표: "그래서 뭘 사야?"에 *결정 가능한 수준*으로 답. 근거: `research/decisions/debate-what-to-buy.md`(10R).
+
+최소 슬라이스(KEEP):
+- `lib.js`: BRIEF_SCHEMA에 `recommendation { spec[ {item, why, checkAt} ], avoid[], candidateTypes[ {type, pros[], cons[], bestFor} ] }`
+  추가. 프롬프트 규칙(브랜드 금지·유형 장단점쌍·사양 확인항목·근거없으면 생략/INSUFFICIENT·항목별 출처).
+  `normalizeBrief` 확장(브랜드 의심·빈값 드롭·상한). `fallbackBrief`에 CASE_NOTES 유형/사양 힌트로 동일 스키마.
+- `public/`: 결과 상단 "이렇게 사면 (더 안전한 선택에 가까워져요)" 블록(추천 사양·피할 것·(조건부)후보 유형) +
+  개인화 칩 3개(연령/맥락/우려, 선택) + 가이드 모달 "구매 기준" 미니섹션. 인라인 면책·출처칩.
+- smoke: unit(신규 필드·fallback 추천·**브랜드명 미포함**) + api + browser(추천 블록·반응형) + 로컬 real-SDK.
+
+Kill rules: 브랜드명 노출 시 배포 금지(가드 강화) / candidateTypes 무근거면 CUT(시드 근거 주제만) /
+추천 블록 반응형·모달 깨지면 배포 금지 / 16:30 KST 이후 기능 동결.
