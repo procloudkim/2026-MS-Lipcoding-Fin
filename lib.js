@@ -544,3 +544,47 @@ export function categoryTree() {
     sources: TRUSTED_SOURCES.map((s) => ({ name: s.name, type: s.type, why: s.why, url: s.url })),
   };
 }
+
+// 안전 주제(사례)를 부모가 읽기 좋은 카드/모달용 메타로 매핑.
+const TOPIC_META = {
+  bpa: { cat: "feeding", title: "젖병·쪽쪽이 환경호르몬" },
+  humidifier: { cat: "environment", title: "가습기 살균제 경고" },
+  phthalate: { cat: "play", title: "치발기·완구 프탈레이트" },
+  carseat: { cat: "mobility", title: "카시트 충돌 안전" },
+  stroller: { cat: "mobility", title: "유모차 끼임·전복" },
+  wipes: { cat: "hygiene", title: "물티슈 성분 체크" },
+  skincare: { cat: "hygiene", title: "로션·바디워시 성분" },
+  sleep: { cat: "sleep", title: "안전한 수면(SIDS)" },
+  powder: { cat: "hygiene", title: "베이비파우더 흡입" },
+  diaper: { cat: "hygiene", title: "기저귀 성분·발진" },
+};
+const CAT_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
+
+// 안심 가이드 서가: 카테고리 + 큐레이션 안전 주제(읽기 전용, 모달 상세용).
+export function guideData() {
+  const topics = CASE_NOTES.map((c) => {
+    const meta = TOPIC_META[c.id] || {};
+    const cat = CAT_BY_ID[meta.cat];
+    const verdict = VERDICTS.includes(c.verdictHint) ? c.verdictHint : "CAUTION";
+    return {
+      id: c.id,
+      title: meta.title || c.topic,
+      topic: c.topic,
+      categoryId: meta.cat || "",
+      category: cat ? cat.name : "",
+      icon: cat ? cat.icon : "🔎",
+      verdict,
+      verdictKo: VERDICT_KO[verdict],
+      summary: c.summary,
+      checklist: (c.checklist || []).slice(0, 8),
+      infoGaps: (c.infoGaps || []).slice(0, 6),
+      alternatives: (c.alternatives || []).slice(0, 5),
+      sources: resolveSources(c.sources || []),
+    };
+  });
+  return {
+    categories: CATEGORIES.map((c) => ({ id: c.id, name: c.name, icon: c.icon, issues: c.issues })),
+    topics,
+    disclaimer: DISCLAIMER,
+  };
+}

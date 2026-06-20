@@ -7,6 +7,7 @@ import {
   matchCategory,
   matchCases,
   categoryTree,
+  guideData,
   VERDICTS,
   AXES,
   STAGES,
@@ -116,6 +117,17 @@ const tree = categoryTree();
 check("categoryTree 6 카테고리(MECE)", tree.categories.length === 6);
 check("categoryTree 안전축/출처 존재", tree.axes.length >= 4 && tree.sources.length >= 6);
 check("categoryTree 출처 URL 포함", tree.sources.every((s) => /^https?:\/\//.test(s.url)));
+
+// ---- guideData (안심 가이드 서가) ----
+const guide = guideData();
+check("guideData 카테고리 6", guide.categories.length === 6);
+check("guideData 주제 10개", guide.topics.length === 10);
+check("guideData 주제 필수필드", guide.topics.every((t) => t.id && t.title && t.verdict && VERDICTS.includes(t.verdict)));
+check("guideData 주제 카테고리 매핑", guide.topics.every((t) => guide.categories.some((c) => c.id === t.categoryId)));
+check("guideData 체크리스트 보유", guide.topics.every((t) => Array.isArray(t.checklist) && t.checklist.length >= 1));
+check("guideData 출처 URL 부착", guide.topics.every((t) => t.sources.every((s) => /^https?:\/\//.test(s.url))));
+check("guideData BPA 카드 수유", guide.topics.find((t) => t.id === "bpa")?.categoryId === "feeding");
+check("guideData 면책 존재", typeof guide.disclaimer === "string" && guide.disclaimer.length > 0);
 
 if (failures > 0) {
   console.error(`\nSMOKE FAIL: ${failures} check(s) failed.`);

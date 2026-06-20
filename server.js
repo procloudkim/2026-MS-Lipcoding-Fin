@@ -2,7 +2,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CopilotClient, approveAll } from "@github/copilot-sdk";
-import { buildBriefPrompt, parseJson, normalizeBrief, fallbackBrief, categoryTree } from "./lib.js";
+import { buildBriefPrompt, parseJson, normalizeBrief, fallbackBrief, categoryTree, guideData } from "./lib.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -72,6 +72,11 @@ app.get("/api/health", (_req, res) => {
 // MECE 카테고리/안전축/공신력 출처 트리 (탐색 + 구조 증거)
 app.get("/api/categories", (_req, res) => {
   res.json(categoryTree());
+});
+
+// 안심 가이드 서가: 카테고리 + 큐레이션 안전 주제(카드/모달용 읽기 전용)
+app.get("/api/guide", (_req, res) => {
+  res.json(guideData());
 });
 
 // 제품/우려 -> Copilot SDK가 구조화한 안전 브리프
