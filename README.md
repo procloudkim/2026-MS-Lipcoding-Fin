@@ -5,14 +5,16 @@
 > 무엇을 먼저 할지·미룰지·버릴지 **결정**하고, 결정된 하루 타임라인과
 > 1순위 작업의 **첫 작업물(초안)** 까지 만들어 준다.
 
-**[🔗 라이브 데모](https://oh-my-dayauto-20260620130000.azurewebsites.net)** ·
-[📋 PRD](PRD.md) ·
+**[📋 PRD](PRD.md)** ·
 [📐 기술 포트폴리오](docs/portfolio/00-INDEX.md) ·
 [🧭 심사 브리프](docs/evaluation/AI_JUDGE_BRIEF.md) ·
 [📝 ADR](docs/adr/) ·
 [⚖️ 자체 심사기](judge/README.md)
 
-`Node + Express` · `@github/copilot-sdk` · `Azure App Service(B1)` · `100% 한국어` · `helmet 보안 하드닝`
+`Node + Express` · `@github/copilot-sdk` · `Azure App Service` · `100% 한국어` · `helmet 보안 하드닝`
+
+> ⚠️ 라이브 Azure URL은 **대회 종료 후 비용 절감을 위해 리소스를 삭제**했습니다.
+> 아래 `npm start`로 동일 동작을 로컬에서 완전히 재현할 수 있습니다.
 
 ---
 
@@ -23,17 +25,17 @@ npm install
 npm run smoke      # 네트워크 비의존 단위 테스트 (28 PASS)
 npm start          # http://localhost:3000
 
-# (선택) 자체 심사기로 게이트/점수/보안 자동 채점
-npm run judge -- --local --azure-url https://oh-my-dayauto-20260620130000.azurewebsites.net
+# (선택) 자체 게이트 점검 도구로 P0 탈락 사유 자가진단
+npm run judge -- --local
 ```
 
-> **자체 심사 결과**: `READY · 100/100 · 보안 A+(발견 0) · P0 게이트 7/7 PASS`
-> (로컬 SDK 토큰 재현 시 100점, 토큰 없이도 98점·보안 A+·7/7 동일. 상세: [`docs/adr/0005-security-hardening.md`](docs/adr/0005-security-hardening.md))
+> **자체 게이트 점검(self-check)**: 제출 전 P0 탈락 사유를 스스로 잡기 위한 도구입니다.
+> 외부 공식 점수가 아니라 **자체 기준** 결과이며, 실제 대회 평가는 **77.8점 / 39팀 중 6위**(UX 5/5·Copilot SDK 4/5·보안 4/5)였습니다.
 
-## ▶ 라이브
+## ▶ 동작 (재현)
 
-- **Live URL**: https://oh-my-dayauto-20260620130000.azurewebsites.net
 - 첫 화면이 곧 작업 화면(랜딩 아님). 우상단 배지로 응답 출처(`Copilot SDK 에이전트` / `오프라인 결정 엔진`)를 표시.
+- 토큰·런타임 없이 `npm start` 하면 폴백 모드로 즉시 동작하고, `COPILOT_GH_TOKEN` 주입 시 실제 SDK 응답(`source: copilot-sdk`)을 재현.
 
 ## 심사위원(AI agent) 빠른 안내
 
@@ -74,10 +76,10 @@ npm run judge -- --local --azure-url https://oh-my-dayauto-20260620130000.azurew
 ## Copilot SDK 증거 (6/6)
 
 1. **dependency** — `package.json` → `@github/copilot-sdk` (+ 런타임 `@github/copilot`)
-2. **import** — `server.js`: `import { CopilotClient, approveAll } from "@github/copilot-sdk"`
-3. **session 생성** — `runAgent()` → `client.createSession({ model, onPermissionRequest: approveAll })`
+2. **import** — `server.js`: `import { CopilotClient } from "@github/copilot-sdk"`
+3. **session 생성** — `runAgent()` → `client.createSession({ model, onPermissionRequest: scopedPermission })`
 4. **SDK-backed endpoint** — `POST /api/plan`(결정/타임라인) + `POST /api/assist`(작업물) = **멀티스텝 에이전트**
-5. **프로덕션 SDK 응답** — 라이브 URL이 `source: "copilot-sdk"`, `authMode: "token"` 반환
+5. **프로덕션 SDK 응답** — 라이브 URL이 `source: "copilot-sdk"`, `authMode: "token"` 반환 (대회 기간 검증)
 6. **README 명시** — 본 절
 
 ## 어떻게 프로덕션에서 SDK가 도는가 (핵심 엔지니어링)
@@ -193,5 +195,7 @@ prep/llm-wiki/           기획/근거 트레이스 (LLM-Wiki)
 ## 운영 메모(정직성)
 
 - `COPILOT_GH_TOKEN`은 Azure App Setting으로만 주입(레포 커밋 없음). 데모용 사용자 토큰.
-- Azure는 **B1**(Always On)로 런타임을 상주시켜 콜드스타트를 줄였다.
+- Azure는 **B1 + Always On**으로 런타임을 상주시켜 콜드스타트를 줄였다.
+- **타임아웃**: `SDK_TIMEOUT_MS` 기본값은 20초이며, 초과 시 폴백으로 전환된다. 런타임 콜드 spawn은 30초+가 걸릴 수 있으므로, 운영 환경(Always On)에서는 App Setting으로 `SDK_TIMEOUT_MS=45000` 권장.
+- **관측성(한계)**: 폴백은 HTTP 200으로 반환되어 데모 가용성을 보장하지만, 운영에서는 장애가 정상처럼 묻힐 수 있다. 응답 `source: fallback` 표기로 최소 정직성은 확보했으며, 폴백 발생 횟수를 메트릭으로 남기는 것이 다음 개선 과제다.
 - 보안 하드닝(helmet/에러 마스킹/권한 축소/진단 라우트 제거)은 위 "보안 하드닝" 절 참조(ADR 0005).

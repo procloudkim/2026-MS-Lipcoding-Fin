@@ -35,3 +35,8 @@ test-results/
 
 # separate projects (이 제출 브랜치의 범위 밖 — 별도 관리)
 side-projects/
+
+# media / recordings
+*.mp4
+*.mov
+*.zip

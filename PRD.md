@@ -32,19 +32,21 @@
 ## 4. Copilot SDK 사용 (추적 가능)
 
 1. dependency — `package.json` → `@github/copilot-sdk@^1.0.2` (+ 런타임 `@github/copilot`)
-2. import — `server.js`: `import { CopilotClient, approveAll } from "@github/copilot-sdk"`
-3. session — `runAgent()` → `client.createSession({ model, onPermissionRequest: approveAll })`
+2. import — `server.js`: `import { CopilotClient } from "@github/copilot-sdk"`
+3. session — `runAgent()` → `client.createSession({ model, onPermissionRequest: scopedPermission })`
 4. 호출 — `session.send({ prompt })` + `assistant.message` 수집 + `session.idle` 종료
 5. SDK-backed endpoint — `POST /api/plan`, `POST /api/assist`
 6. 정직한 source 표기 — 응답 `source: "copilot-sdk" | "fallback"`를 화면 배지로 노출
 
+> 권한 핸들러는 전면 승인이 아니라 `scopedPermission`으로, 셸/파일/URL/MCP/확장 권한 요청을 거부하고 무해한 요청만 1회 승인한다(프롬프트 주입 방어, ADR 0005).
 > SDK는 `@github/copilot` CLI 런타임을 spawn 해 JSON-RPC로 제어한다. 자세한 트레이스는 `docs/adr/0002-copilot-sdk-integration.md` 참조.
 
 ## 5. Azure 배포 (필수)
 
-- **Live URL**: https://oh-my-dayauto-20260620130000.azurewebsites.net
-- 리소스그룹 `rg-haru-jeongri` · koreacentral · Linux · F1(Free) · NODE:24-lts · `az webapp up`(Oryx)
-- **public URL smoke (검증됨)**
+- **Live URL (대회 기간)**: `https://oh-my-dayauto-20260620130000.azurewebsites.net` — *대회 종료 후 비용 절감을 위해 리소스 삭제됨. 로컬 `npm start`로 동일 재현.*
+- 리소스그룹 `rg-haru-jeongri` · koreacentral · Linux · NODE:24-lts · `az webapp up`(Oryx)
+- **SKU 히스토리**: 초기 F1(Free)로 정적 배포 검증 → 최종 **B1(Basic) + Always On** (Copilot 런타임 ~500MB 콜드스타트 완화).
+- **public URL smoke (대회 기간 검증됨)**
   - `GET /` → 200 (한국어 앱 렌더)
   - `GET /api/health` → `{ ok: true, authMode: "token" }`
   - `POST /api/plan` → 200, **`source: "copilot-sdk"`** (서버 토큰 인증으로 Azure에서도 실제 모델 응답)

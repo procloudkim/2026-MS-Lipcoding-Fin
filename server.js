@@ -193,23 +193,27 @@ app.get("/api/health", (_req, res) => {
 
 // 맥락 -> 결정/타임라인/첫 작업물
 app.post("/api/plan", async (req, res) => {
-  const input = String(req.body?.context ?? req.body?.text ?? "").trim().slice(0, MAX_INPUT);
+  const rawInput = String(req.body?.context ?? req.body?.text ?? "").trim();
+  const input = rawInput.slice(0, MAX_INPUT);
   if (!input) {
     return res.status(400).json({ error: "EMPTY_INPUT", message: "오늘의 맥락을 입력해주세요." });
   }
+  const truncated = rawInput.length > MAX_INPUT
+    ? `입력이 길어 앞 ${MAX_INPUT}자만 처리했습니다.`
+    : null;
   const now = nowKST();
   try {
     const raw = await runAgent(buildPlanPrompt(input, now));
     const plan = normalizePlan(parseJson(raw));
     if (!plan) throw new Error("Copilot SDK 응답을 계획으로 구조화하지 못했습니다.");
-    return res.json({ source: "copilot-sdk", model: MODEL, authMode: AUTH_MODE, plan });
+    return res.json({ source: "copilot-sdk", model: MODEL, authMode: AUTH_MODE, plan, ...(truncated ? { notice: truncated } : {}) });
   } catch (err) {
     console.error("[/api/plan] SDK 실패, fallback 사용:", err?.message || err);
     return res.json({
       source: "fallback",
       model: null,
       plan: fallbackPlan(input, now),
-      notice: "Copilot SDK 미연결 — 오프라인 결정 엔진으로 처리했습니다.",
+      notice: [truncated, "Copilot SDK 미연결 — 오프라인 결정 엔진으로 처리했습니다."].filter(Boolean).join(" "),
     });
   }
 });

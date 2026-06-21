@@ -17,7 +17,7 @@
 | 제약 | 상태 | 증거 |
 | --- | --- | --- |
 | Copilot SDK 실제 사용 | PASS (로컬+프로덕션) | 라이브 URL `source: copilot-sdk` (토큰 인증) |
-| Azure 배포 + URL | PASS | https://oh-my-dayauto-20260620130000.azurewebsites.net |
+| Azure 배포 + URL | PASS (대회 기간) | `oh-my-dayauto-20260620130000.azurewebsites.net` — 대회 후 리소스 삭제, 로컬 재현 가능 |
 | 한국어/Warm Editorial/반응형 | PASS | `public/`, `img/azure-sdk-live.png` |
 
 ## 4. Copilot SDK 증거 (6/6)
