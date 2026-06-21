@@ -7,6 +7,7 @@
 
 **[🔗 라이브 데모](https://oh-my-dayauto-20260620130000.azurewebsites.net)** ·
 [📋 PRD](PRD.md) ·
+[📐 기술 포트폴리오](docs/portfolio/00-INDEX.md) ·
 [🧭 심사 브리프](docs/evaluation/AI_JUDGE_BRIEF.md) ·
 [📝 ADR](docs/adr/) ·
 [⚖️ 자체 심사기](judge/README.md)
