@@ -14,7 +14,7 @@
 `Node + Express` · `@github/copilot-sdk` · `Azure App Service` · `100% 한국어` · `helmet 보안 hardening` · `개인 참여`
 
 > ⚠️ 라이브 Azure URL은 **대회 종료 후 비용 절감을 위해 리소스를 삭제**했습니다.
-> 아래 `npm start`로 로컬에서 실행할 수 있습니다. 토큰이 없거나 Copilot CLI 런타임을 찾지 못하면 deterministic fallback으로 동작하고,
+> 아래 `npm start`로 로컬에서 실행할 수 있습니다. 인증(토큰 또는 Copilot CLI 로그인)이 없거나 Copilot CLI 런타임을 찾지 못하면 deterministic fallback으로 동작하고,
 > 둘 다 준비하면 실제 SDK 응답을 받습니다(「로컬에서 실제 SDK 응답(source=copilot-sdk) 재현」 절).
 
 ---
@@ -36,7 +36,7 @@ npm run judge -- --local
 ## 동작 재현
 
 - 첫 화면이 곧 작업 화면입니다(랜딩 페이지가 아닙니다). 오른쪽 위 배지로 응답 출처(`Copilot SDK 에이전트` / `오프라인 결정 엔진`)를 표시합니다.
-- 토큰이 없거나 Copilot CLI 런타임을 찾지 못한 상태에서 `npm start`를 실행하면 fallback 모드로 바로 동작합니다. `COPILOT_GH_TOKEN`을 주입하고 런타임을 쓸 수 있으면 실제 SDK 응답(`source: copilot-sdk`)을 받습니다.
+- 인증(토큰 또는 Copilot CLI 로그인)이 없거나 Copilot CLI 런타임을 찾지 못한 상태에서 `npm start`를 실행하면 fallback 모드로 바로 동작합니다. `COPILOT_GH_TOKEN`을 주입하거나 Copilot CLI에 로그인하고 런타임을 쓸 수 있으면 실제 SDK 응답(`source: copilot-sdk`)을 받습니다.
 
 ## 심사위원(AI agent) 빠른 안내
 
