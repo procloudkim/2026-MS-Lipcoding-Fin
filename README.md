@@ -11,7 +11,7 @@
 [📝 ADR](docs/adr/) ·
 [⚖️ 자체 심사기](judge/README.md)
 
-`Node + Express` · `@github/copilot-sdk` · `Azure App Service` · `100% 한국어` · `helmet 보안 하드닝`
+`Node + Express` · `@github/copilot-sdk` · `Azure App Service` · `100% 한국어` · `helmet 보안 하드닝` · `개인 참여`
 
 > ⚠️ 라이브 Azure URL은 **대회 종료 후 비용 절감을 위해 리소스를 삭제**했습니다.
 > 아래 `npm start`로 같은 동작을 로컬에서 완전히 재현할 수 있습니다.
